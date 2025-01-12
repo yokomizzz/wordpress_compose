@@ -2,17 +2,40 @@ version: '3'
 
 services:
   wordpress:
-    image: wordpress:latest # 最新版のWordPress公式イメージを利用
+    platform: linux/x86_64
+    image: wordpress:latest
     ports:
-      - "3000:80" # ポート番号の設定
+      - '3000:80'
     depends_on:
-      - mysql # mysqlを立ち上げた後にWordpressを立ち上げる設定
-    env_file: .env # 環境変数の定義に.envを利用
+      - mysql
+    env_file: .env
     volumes:
-        - ./wp-content:/var/www/html/wp-content # マウントするディレクトリを指定
+      - ./wordpress:/var/www/html
+    networks:
+      - app-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
 
   mysql:
-    image: mysql:5.7 # MySQL5.7公式イメージを利用
-    env_file: .env # 環境変数の定義に.envを利用
+    image: mysql:5.7
+    env_file: .env
     ports:
-      - "3306:3306" #ポート番号の設定
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  mysql_data:
+
+networks:
+  app-network:
